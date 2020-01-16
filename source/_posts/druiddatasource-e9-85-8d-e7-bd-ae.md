@@ -1,0 +1,270 @@
+---
+title: " DruidDataSource配置\t\t"
+tags:
+  - 数据库
+url: 307.html
+id: 307
+comments: false
+categories:
+  - 数据库
+date: 2018-11-22 14:53:30
+---
+
+DruidDataSource配置兼容DBCP，但个别配置的语意有所区别。 [参考地址](https://github.com/alibaba/druid/wiki/DruidDataSource%E9%85%8D%E7%BD%AE%E5%B1%9E%E6%80%A7%E5%88%97%E8%A1%A8)
+
+配置
+
+缺省值
+
+说明
+
+name
+
+配置这个属性的意义在于，如果存在多个数据源，监控的时候可以通过名字来区分开来。如果没有配置，将会生成一个名字，格式是："DataSource-" + System.identityHashCode(this). 另外配置此属性至少在1.0.5版本中是不起作用的，强行设置name会出错。[详情-点此处](http://blog.csdn.net/lanmo555/article/details/41248763)。
+
+url
+
+连接数据库的url，不同数据库不一样。例如：  
+mysql : jdbc:mysql://10.20.153.104:3306/druid2  
+oracle : jdbc:oracle:thin:@10.20.149.85:1521:ocnauto
+
+username
+
+连接数据库的用户名
+
+password
+
+连接数据库的密码。如果你不希望密码直接写在配置文件中，可以使用ConfigFilter。[详细看这里](https://github.com/alibaba/druid/wiki/%E4%BD%BF%E7%94%A8ConfigFilter)
+
+driverClassName
+
+根据url自动识别
+
+这一项可配可不配，如果不配置druid会根据url自动识别dbType，然后选择相应的driverClassName
+
+initialSize
+
+0
+
+初始化时建立物理连接的个数。初始化发生在显示调用init方法，或者第一次getConnection时
+
+maxActive
+
+8
+
+最大连接池数量
+
+maxIdle
+
+8
+
+已经不再使用，配置了也没效果
+
+minIdle
+
+最小连接池数量
+
+maxWait
+
+获取连接时最大等待时间，单位毫秒。配置了maxWait之后，缺省启用公平锁，并发效率会有所下降，如果需要可以通过配置useUnfairLock属性为true使用非公平锁。
+
+poolPreparedStatements
+
+false
+
+是否缓存preparedStatement，也就是PSCache。PSCache对支持游标的数据库性能提升巨大，比如说oracle。在mysql下建议关闭。
+
+maxPoolPreparedStatementPerConnectionSize
+
+-1
+
+要启用PSCache，必须配置大于0，当大于0时，poolPreparedStatements自动触发修改为true。在Druid中，不会存在Oracle下PSCache占用内存过多的问题，可以把这个数值配置大一些，比如说100
+
+validationQuery
+
+用来检测连接是否有效的sql，要求是一个查询语句，常用select 'x'。如果validationQuery为null，testOnBorrow、testOnReturn、testWhileIdle都不会起作用。
+
+validationQueryTimeout
+
+单位：秒，检测连接是否有效的超时时间。底层调用jdbc Statement对象的void setQueryTimeout(int seconds)方法
+
+testOnBorrow
+
+true
+
+申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能。
+
+testOnReturn
+
+false
+
+归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能。
+
+testWhileIdle
+
+false
+
+建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效。
+
+keepAlive
+
+false  
+（1.0.28）
+
+连接池中的minIdle数量以内的连接，空闲时间超过minEvictableIdleTimeMillis，则会执行keepAlive操作。
+
+timeBetweenEvictionRunsMillis
+
+1分钟（1.0.14）
+
+有两个含义：  
+1) Destroy线程会检测连接的间隔时间，如果连接空闲时间大于等于minEvictableIdleTimeMillis则关闭物理连接。  
+2) testWhileIdle的判断依据，详细看testWhileIdle属性的说明
+
+numTestsPerEvictionRun
+
+30分钟（1.0.14）
+
+不再使用，一个DruidDataSource只支持一个EvictionRun
+
+minEvictableIdleTimeMillis
+
+连接保持空闲而不被驱逐的最小时间
+
+connectionInitSqls
+
+物理连接初始化的时候执行的sql
+
+exceptionSorter
+
+根据dbType自动识别
+
+当数据库抛出一些不可恢复的异常时，抛弃连接
+
+filters
+
+属性类型是字符串，通过别名的方式配置扩展插件，常用的插件有：  
+监控统计用的filter:stat  
+日志用的filter:log4j  
+防御sql注入的filter:wall
+
+proxyFilters
+
+类型是List<com.alibaba.druid.filter.Filter>，如果同时配置了filters和proxyFilters，是组合关系，并非替换关系
+
+1\. 通用配置
+========
+
+DruidDataSource大部分属性都是参考DBCP的，如果你原来就是使用DBCP，迁移是十分方便的。
+
+     <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close"> 
+         <property name="url" value="${jdbc_url}" />
+         <property name="username" value="${jdbc_user}" />
+         <property name="password" value="${jdbc_password}" />
+    
+         <property name="filters" value="stat" />
+    
+         <property name="maxActive" value="20" />
+         <property name="initialSize" value="1" />
+         <property name="maxWait" value="60000" />
+         <property name="minIdle" value="1" />
+    
+         <property name="timeBetweenEvictionRunsMillis" value="60000" />
+         <property name="minEvictableIdleTimeMillis" value="300000" />
+    
+         <property name="testWhileIdle" value="true" />
+         <property name="testOnBorrow" value="false" />
+         <property name="testOnReturn" value="false" />
+    
+         <property name="poolPreparedStatements" value="true" />
+         <property name="maxOpenPreparedStatements" value="20" />
+    
+         <property name="asyncInit" value="true" />
+     </bean>
+    
+
+*   在上面的配置中，通常你需要配置url、username、password，maxActive这三项。
+*   Druid会自动跟url识别驱动类名，如果连接的数据库非常见数据库，配置属性driverClassName
+*   asyncInit是1.1.4中新增加的配置，如果有initialSize数量较多时，打开会加快应用启动时间
+
+2\. 连接阿里云AnalyticDB参考配置
+=======================
+
+使用Druid连接池连接阿里云[AnalyticDB](https://www.alibabacloud.com/zh/product/analytic-db) 建议配置[keepAlive=true](https://github.com/alibaba/druid/wiki/KeepAlive_cn) ，并使用[1.1.12](http://repo.maven.apache.org/maven2/com/alibaba/druid/1.1.12/) 之后的版本
+
+      <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close"> 
+         <!-- 基本属性 url、user、password -->
+         <property name="url" value="${jdbc_url}" />
+         <property name="username" value="${jdbc_user}" />
+         <property name="password" value="${jdbc_password}" />
+    
+         <!-- 配置初始化大小、最小、最大 -->
+         <property name="initialSize" value="5" />
+         <property name="minIdle" value="10" /> 
+         <property name="maxActive" value="20" />
+    
+         <!-- 配置获取连接等待超时的时间 -->
+         <property name="maxWait" value="60000" />
+    
+         <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+         <property name="timeBetweenEvictionRunsMillis" value="2000" />
+    
+         <!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+         <property name="minEvictableIdleTimeMillis" value="600000" />
+         <property name="maxEvictableIdleTimeMillis" value="900000" />
+    
+         <property name="validationQuery" value="show status like '%Service_Status%'" />
+         <property name="testWhileIdle" value="true" />
+         <property name="testOnBorrow" value="false" />
+         <property name="testOnReturn" value="false" />
+    
+         <property name="keepAlive" value="true" />
+         <property name="phyMaxUseCount" value="100000" />
+    
+         <!-- 配置监控统计拦截的filters -->
+         <property name="filters" value="stat" /> 
+     </bean>
+    
+
+2.1 注意事项
+--------
+
+*   validationQuery是show status like '%Service_Status%'
+
+3\. 连接阿里云Data Lake Analytics参考配置
+================================
+
+使用Druid连接池连接阿里云[Data Lake Analytics](https://www.aliyun.com/product/datalakeanalytics) 建议配置[keepAlive=true](https://github.com/alibaba/druid/wiki/KeepAlive_cn)，并使用[1.1.12](http://repo.maven.apache.org/maven2/com/alibaba/druid/1.1.12/) 之后的版本
+
+      <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close"> 
+         <!-- 基本属性 url、user、password -->
+         <property name="url" value="${jdbc_url}" />
+         <property name="username" value="${jdbc_user}" />
+         <property name="password" value="${jdbc_password}" />
+    
+         <!-- 配置初始化大小、最小、最大 -->
+         <property name="initialSize" value="1" />
+         <property name="minIdle" value="1" /> 
+         <property name="maxActive" value="10" />
+    
+         <!-- 配置获取连接等待超时的时间 -->
+         <property name="maxWait" value="60000" />
+    
+         <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+         <property name="timeBetweenEvictionRunsMillis" value="2000" />
+    
+         <!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+         <property name="minEvictableIdleTimeMillis" value="600000" />
+         <property name="maxEvictableIdleTimeMillis" value="900000" />
+    
+         <property name="validationQuery" value="select 1" />
+         <property name="testWhileIdle" value="true" />
+         <property name="testOnBorrow" value="false" />
+         <property name="testOnReturn" value="false" />
+    
+         <property name="keepAlive" value="true" />
+         <property name="phyMaxUseCount" value="100000" />
+    
+         <!-- 配置监控统计拦截的filters -->
+         <property name="filters" value="stat" /> 
+     </bean>
