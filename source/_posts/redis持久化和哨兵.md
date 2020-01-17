@@ -65,7 +65,7 @@ redis默认会对RDB文件进行压缩处理，默认开启，可以通过`rdbco
 
 ### 重启加载
 
-![](static/redis重启加载流程图.png)
+![](/static/redis重启加载流程图.png)
 
 ### 其他
 #### 动态设置配置
