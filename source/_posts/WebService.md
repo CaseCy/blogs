@@ -1,5 +1,5 @@
 ---
-title: " WebService\t\t"
+title: "WebService"
 tags:
   - 杂
 url: 116.html
@@ -69,7 +69,7 @@ webservice的开发主要是服务端和客户端，服务端发布服务，客�
         @WebMethod(action = "www.baidu.com",operationName = "getUser")
         public UserDTO getUser(String userId);
     }
-    
+
 
     @WebService(endpointInterface = "cn.cases.webservice.beans.HelloCxfInterface",//<wsdl:portType name="HelloCxfInterface">
             serviceName="HelloService",//<wsdl:portType name="HelloService">
@@ -96,7 +96,6 @@ webservice的开发主要是服务端和客户端，服务端发布服务，客�
             return "One";
         }
     }
-    
 
 * * *
 
@@ -120,7 +119,7 @@ webservice的开发主要是服务端和客户端，服务端发布服务，客�
             log.info("暴露成功！");
         }
     }
-    
+
 
 ### 使用Axis1.x发布
 
@@ -131,7 +130,7 @@ webservice的开发主要是服务端和客户端，服务端发布服务，客�
                 <artifactId>axis</artifactId>
                 <version>1.4</version>
             </dependency>
-    
+
 
 在web.xml中配置
 
@@ -180,7 +179,7 @@ webservice的开发主要是服务端和客户端，服务端发布服务，客�
             <extension>wsdl</extension>
             <mime-type>text/xml</mime-type>
         </mime-mapping>
-    
+
 
 在`WEB-INF`目录下创建一个`server-config.wsdd`文件，里面添加如下内容。
 
@@ -267,17 +266,17 @@ webservice的开发主要是服务端和客户端，服务端发布服务，客�
         </responseFlow>
       </transport>
     </deployment>
-    
+
 
 上面这一步也可以使用axis提供的工具生成，具体操作可参考:[定制发布](http://blog.csdn.net/qq_14852397/article/details/46385713) 需要将项目编译之后在WEB-INF下面打开命令行窗口，执行下面的命令
 
     java -Djava.ext.dirs=lib org.apache.axis.client.AdminClient deploy.wsdd
-    
+
 
 如果执行上面的命令出现404的错误，就使用下面的命令，这里的端口号根据tomcat启动的端口号行，如果有上下文路径要加入上下文路径
 
     java -Djava.ext.dirs=lib org.apache.axis.client.AdminClient -lhttp://localhost:8080/services/AdminService deploy.wsdd
-    
+
 
 执行了之后会在目录中生成一个叫`server-config.wsdd`的文件，将这个文件复制项目中的`WEB-INF`下面就可以了。 deploy.wsdd需要自己编写放在`WEB-INF`下内容如下
 
@@ -293,7 +292,7 @@ webservice的开发主要是服务端和客户端，服务端发布服务，客�
             <parameter name="scope" value="application" />
         </service>
     </deployment>
-    
+
 
 wsdd的一些详细配置可以参考:[最详细的WSDD配置文件注释](http://blog.csdn.net/u011063151/article/details/52590282) 使用idea可以快速的创建`Axis`的项目文件,其他IDE工具应该都有这个功能，这里没有试过。 发布好的webservice访问界面如下 ![axis发布成功](http://imageu.oss-cn-shenzhen.aliyuncs.com/noteimage/axis%E5%8F%91%E5%B8%83%E6%88%90%E5%8A%9F.png) 这里的MyService就是自己部署Service下面对应发布的方法，其他的几个Service是axis自带的一些Service。 注：发布的时候如果出现异常`ClassNotFound`+发布类的权限定名，是因为要发布的类没有编译导致的，重新编译项目即可。
 
@@ -311,12 +310,12 @@ wsdd的一些详细配置可以参考:[最详细的WSDD配置文件注释](http:
                 <artifactId>cxf-rt-transports-http</artifactId>
                 <version>3.1.8</version>
             </dependency>
-    
+
 
 注：Spring版本使用4.2.0以上的，CXF的版本必须在3.0以上，要不然会报下面这个错
 
     java.lang.NoSuchMethodError:org.springframework.aop.support.AopUtils.isCglibProxyClass(Ljava/lang/Class;)
-    
+
 
 在web.xml中加入Servlet
 
@@ -329,7 +328,7 @@ wsdd的一些详细配置可以参考:[最详细的WSDD配置文件注释](http:
             <servlet-name>cxf</servlet-name>
             <url-pattern>/services/*</url-pattern>
         </servlet-mapping>
-    
+
 
 在Spring的配置文件中加入下面的内容
 
@@ -346,7 +345,7 @@ wsdd的一些详细配置可以参考:[最详细的WSDD配置文件注释](http:
         <jaxws:endpoint id="DemoWebservice" implementor="cn.cases.webservice.beans.HelloCxf" address="/demo"/>
     
     </beans>
-    
+
 
 注：使用的时候要加入`xmlns:jaxws="http://cxf.apache.org/jaxws"`等内容
 
@@ -362,7 +361,7 @@ wsdd的一些详细配置可以参考:[最详细的WSDD配置文件注释](http:
     
         //略去getter/setter
     }
-    
+
 
 暴露在外的接口
 
@@ -379,7 +378,7 @@ wsdd的一些详细配置可以参考:[最详细的WSDD配置文件注释](http:
         @WebMethod(action = "www.baidu.com",operationName = "getUser")
         public UserDTO getUser(String userId);
     }
-    
+
 
 这里的action对应的是生成的wsdl中的soapAction，soapAction是用来定义请求的地址的，可以为空，但是，SOAPBinding对应的是发送的SOAP消息中包含的内容，有几种模式，可以参考：[WSDL样式详解](http://blog.csdn.net/etttttss/article/details/17412081) [SOAP的消息绑定机制](http://blog.csdn.net/seasky323/article/details/6746174) 接口实现类
 
@@ -408,7 +407,7 @@ wsdd的一些详细配置可以参考:[最详细的WSDD配置文件注释](http:
             return "One";
         }
     }
-    
+
 
 这里的接口和实现类都要加`@WebService`的标签，暴露在外的方法是以接口的方法来定的。如这里暴露在外的方法只有`sayHello()`和`getUser()`而没有`getOne()`
 
@@ -436,7 +435,7 @@ wsdd的一些详细配置可以参考:[最详细的WSDD配置文件注释](http:
           //执行，调用webservice
           User result = (User) call.invoke(new Object[]{name});
           System.out.println("返回结果"+result.getEmail());
-    
+
 
 请求的SOAP消息
 
@@ -449,7 +448,7 @@ wsdd的一些详细配置可以参考:[最详细的WSDD配置文件注释](http:
         </ns1:getUser>
       </soapenv:Body>
     </soapenv:Envelope>
-    
+
 
 响应的SOAP消息
 
@@ -467,7 +466,7 @@ wsdd的一些详细配置可以参考:[最详细的WSDD配置文件注释](http:
         </ns2:getUserResponse>
       </soap:Body>
     </soap:Envelope>
-    
+
 
 注：这个客户端是axis的客户端，类都是axis包中的
 
