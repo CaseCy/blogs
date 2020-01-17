@@ -10,15 +10,15 @@ categories:
 date: 2018-10-19 09:45:53
 ---
 
-tags： docker
-
-* * *
+---
 
 跳过安装教程
 
-* * *
+---
 
-命令 [参考](https://blog.csdn.net/permike/article/details/51879578) [run命令详解](https://blog.csdn.net/one_clouder/article/details/39224767)
+命令
+[参考](https://blog.csdn.net/permike/article/details/51879578)
+[run命令详解](https://blog.csdn.net/one_clouder/article/details/39224767)
 
     docker version // docker的版本信息，包含server和client 
     docker info //docker的基本信息
