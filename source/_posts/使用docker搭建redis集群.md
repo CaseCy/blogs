@@ -28,42 +28,48 @@ date: 2019-09-12 12:08:05
     cluster-announce-port ${PORT}
     cluster-announce-bus-port 1${PORT}
     appendonly yes
-    
+
 
 如果需要密码则加上配置
 
     masterauth 123456
     requirepass 123456
-    
+
 
 注：5.x以下版本不支持在创建集群的时候指定密码，所以要先创建好集群之后，再设置密码，5.x+版本支持在创建集群的时候指定参数`-a`来指定创建集群时候密码
 
 ### 2.docker创建集群的网络
 
-    docker network create redis-net
-    
+```bash
+docker network create redis-net
+```
+
 
 ### 3.生成配置信息
 
-    for port in `seq 7000 7005`; do \
-      mkdir -p ./${port}/conf \
-      && PORT=${port} envsubst < ./redis-cluster.tmpl > ./${port}/conf/redis.conf \
-      && mkdir -p ./${port}/data; \
-    done
-    
+```bash
+for port in `seq 7000 7005`; do \
+  mkdir -p ./${port}/conf \
+  && PORT=${port} envsubst < ./redis-cluster.tmpl > ./${port}/conf/redis.conf \
+  && mkdir -p ./${port}/data; \
+done
+```
+
 
 执行之后会在当前目录下生成 7000-7005的文件夹，对应不同的端口，里面包含conf和data文件夹
 
 ### 4.创建redis容器
 
-    for port in `seq 7000 7005`; do \
-      docker run -d -ti -p ${port}:${port} -p 1${port}:1${port} \
-      -v /root/redis-cluster/${port}/conf/redis.conf:/usr/local/etc/redis/redis.conf \
-      -v /root/redis-cluster/${port}/data:/data \
-      --restart always --name redis-${port} --net redis-net \
-      redis:4.0 redis-server /usr/local/etc/redis/redis.conf; \
-    done
-    
+```bash
+for port in `seq 7000 7005`; do \
+  docker run -d -ti -p ${port}:${port} -p 1${port}:1${port} \
+  -v /root/redis-cluster/${port}/conf/redis.conf:/usr/local/etc/redis/redis.conf \
+  -v /root/redis-cluster/${port}/data:/data \
+  --restart always --name redis-${port} --net redis-net \
+  redis:4.0 redis-server /usr/local/etc/redis/redis.conf; \
+done
+```
+
 
 这里会启动6个redis 打开端口7000-7005,17000-17005并映射到了主机，将端口文件夹中的配置文件挂载到容器中，端口文件夹中的data文件夹挂载到容器中的/data下并自动重启 注：这里使用的是redis的4.0版本
 
@@ -84,13 +90,15 @@ redis在4.x+版本提供了对docker的友好支持，如果需要redis能够使
 
 #### 2.使用ruby + redis-trib.rb 创建集群
 
-    echo yes | docker run -i --rm -v /root/redis-4.0.12/src/redis-trib.rb:/redis-trib.rb --net redis-net ruby sh -c '\
-      gem install redis -v 4.0 \
-      && ruby redis-trib.rb create --replicas 1 \
-      '"$(for port in `seq 7000 7005`; do \
-        echo -n "$(docker inspect --format '{ { (index .NetworkSettings.Networks "redis-net").IPAddress }}' "redis-${port}")":${port} ' ' ; \
-      done)"
-    
+```bash
+echo yes | docker run -i --rm -v /root/redis-4.0.12/src/redis-trib.rb:/redis-trib.rb --net redis-net ruby sh -c '\
+  gem install redis -v 4.0 \
+  && ruby redis-trib.rb create --replicas 1 \
+  '"$(for port in `seq 7000 7005`; do \
+    echo -n "$(docker inspect --format '{ { (index .NetworkSettings.Networks "redis-net").IPAddress }}' "redis-${port}")":${port} ' ' ; \
+  done)"
+```
+
 
 这里就是将`/root/redis-4.0.12/src/redis-trib.rb`该文件挂载到容器的`/redis-trib.rb`这个目录下，然后使用ruby来执行该文件创建集群
 
@@ -98,26 +106,32 @@ redis在4.x+版本提供了对docker的友好支持，如果需要redis能够使
 
 5.x使用redis-cli来创建集群，所以这里不需要去挂载`redis-trib.rb`,单独启动一个5.x的redis实例，指定redis-cli创建集群的命令就可以了
 
-    echo yes | docker run -i --rm -p 6379 --net redis-net redis:5.0 \
-       redis-cli --cluster create \
-       $(for port in `seq 7000 7005`; do \
-         echo -n "$(docker inspect --format '{ { (index .NetworkSettings.Networks "redis-net").IPAddress }}' "redis-${port}")":${port} ' ' ; \
-         done) $(echo "--cluster-replicas 1")
-    
+```bash
+echo yes | docker run -i --rm -p 6379 --net redis-net redis:5.0 \
+   redis-cli --cluster create \
+   $(for port in `seq 7000 7005`; do \
+     echo -n "$(docker inspect --format '{ { (index .NetworkSettings.Networks "redis-net").IPAddress }}' "redis-${port}")":${port} ' ' ; \
+     done) $(echo "--cluster-replicas 1")
+```
+
 
 如果使用了密码加上配置（5.x+版本支持，在配置文件中加`masterauth` `requirepass`属性）
 
-    -a 123456
-    
+```bash
+-a 123456
+```
+
 
 即
 
-    echo yes | docker run -i --rm -p 6379 --net redis-net redis:5.0 \
-       redis-cli --cluster create \
-       $(for port in `seq 7000 7005`; do \
-         echo -n "$(docker inspect --format '{ { (index .NetworkSettings.Networks "redis-net").IPAddress }}' "redis-${port}")":${port} ' ' ; \
-         done) $(echo "--cluster-replicas 1 -a 123456")
-    
+```bash
+echo yes | docker run -i --rm -p 6379 --net redis-net redis:5.0 \
+   redis-cli --cluster create \
+   $(for port in `seq 7000 7005`; do \
+     echo -n "$(docker inspect --format '{ { (index .NetworkSettings.Networks "redis-net").IPAddress }}' "redis-${port}")":${port} ' ' ; \
+     done) $(echo "--cluster-replicas 1 -a 123456")
+```
+
 
 注：
 
