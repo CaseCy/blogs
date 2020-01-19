@@ -100,7 +100,9 @@ theme: next
 deploy:
   type: git
   branch: master
-  repo: git@gitee.com:cononyc/blog.git
+  repo: 
+    - 'git@gitee.com:cononyc/blog.git'
+    - 'git@github.com:CaseCy/blog.git'
 
 archive_generator:
     per_page: 0
